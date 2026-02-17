@@ -2,6 +2,7 @@
 """
 Chikuya DX AI Scanner
 Scans RSS feeds for AI news relevant to food manufacturing and Google Workspace/AppSheet.
+Version: 2.0 (Email optional)
 """
 
 import os
@@ -40,6 +41,7 @@ EMAIL_TO = os.getenv("EMAIL_USER")  # Send to self by default
 EMAIL_ENABLED = bool(EMAIL_USER and EMAIL_PASSWORD)
 if not EMAIL_ENABLED:
     print("⚠️  Email credentials not set. Results will be logged only (check GitHub Actions logs).")
+    print("✅ Running with email disabled - this is expected if EMAIL_USER/EMAIL_PASSWORD secrets are not set.")
 
 
 def parse_date(date_string: str) -> datetime:

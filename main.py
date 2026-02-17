@@ -143,31 +143,47 @@ SUMMARY: [if relevance > 7, provide one sentence in Japanese and English, otherw
 def scan_feeds() -> List[Dict]:
     """Scan all RSS feeds and return relevant articles."""
     relevant_articles = []
+    all_processed = []
     
     for feed_url in RSS_FEEDS:
         print(f"Scanning feed: {feed_url}")
+        feed_count = 0
         try:
             feed = feedparser.parse(feed_url)
             
             for entry in feed.entries:
                 if is_recent_article(entry, hours=24):
+                    feed_count += 1
                     title, snippet = get_article_content(entry)
                     link = entry.get('link', '')
                     
                     print(f"  Processing: {title[:50]}...")
                     relevance, summary = rate_and_summarize(title, snippet)
                     
+                    article_info = {
+                        'title': title,
+                        'link': link,
+                        'relevance': relevance,
+                        'summary': summary,
+                        'source': feed_url
+                    }
+                    all_processed.append(article_info)
+                    
                     if relevance > 7:
-                        relevant_articles.append({
-                            'title': title,
-                            'link': link,
-                            'relevance': relevance,
-                            'summary': summary,
-                            'source': feed_url
-                        })
-                        print(f"    ✓ Relevant (score: {relevance})")
+                        relevant_articles.append(article_info)
+                        print(f"    ✓ Relevant (score: {relevance}/10)")
+                    else:
+                        print(f"    - Not relevant (score: {relevance}/10)")
+            
+            if feed_count == 0:
+                print(f"  No articles found from the last 24 hours")
+            else:
+                print(f"  Processed {feed_count} article(s) from last 24 hours")
         except Exception as e:
             print(f"Error processing feed {feed_url}: {e}")
+    
+    # Summary
+    print(f"\n📊 Summary: Processed {len(all_processed)} total articles, {len(relevant_articles)} relevant (score > 7)")
     
     return relevant_articles
 

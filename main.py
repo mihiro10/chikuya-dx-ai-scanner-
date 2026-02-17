@@ -32,13 +32,14 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Email configuration
+# Email configuration (optional - if not set, results will only be logged)
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_TO = os.getenv("EMAIL_USER")  # Send to self by default
 
-if not EMAIL_USER or not EMAIL_PASSWORD:
-    raise ValueError("EMAIL_USER and EMAIL_PASSWORD environment variables must be set")
+EMAIL_ENABLED = bool(EMAIL_USER and EMAIL_PASSWORD)
+if not EMAIL_ENABLED:
+    print("⚠️  Email credentials not set. Results will be logged only (check GitHub Actions logs).")
 
 
 def parse_date(date_string: str) -> datetime:
@@ -171,6 +172,10 @@ def scan_feeds() -> List[Dict]:
 
 def send_email_report(articles: List[Dict]):
     """Send email report with relevant articles."""
+    if not EMAIL_ENABLED:
+        print("Email not configured. Skipping email send.")
+        return
+    
     if not articles:
         print("No relevant articles found. Skipping email.")
         return
@@ -240,6 +245,18 @@ def main():
     
     # Send email if there are relevant articles
     if relevant_articles:
+        # Print results to console/logs
+        print("\n" + "=" * 60)
+        print("📊 RELEVANT ARTICLES FOUND:")
+        print("=" * 60)
+        for i, article in enumerate(relevant_articles, 1):
+            print(f"\n{i}. {article['title']}")
+            print(f"   Relevance: {article['relevance']}/10")
+            print(f"   Summary: {article['summary']}")
+            print(f"   Link: {article['link']}")
+            print(f"   Source: {article['source']}")
+        
+        # Try to send email (if configured)
         send_email_report(relevant_articles)
     else:
         print("No relevant articles to report.")

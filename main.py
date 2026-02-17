@@ -133,7 +133,13 @@ def get_article_content(entry: Dict) -> tuple:
 def rate_and_summarize(title: str, snippet: str) -> tuple:
     """Use Gemini AI to rate relevance and generate summary if relevant."""
     system_prompt = """You are a DX Manager at a Japanese food manufacturing company. 
-Rate this news item on a scale of 1-10 for relevance to factory automation, AppSheet development, or operational efficiency. 
+Rate this AI news article on a scale of 1-10 for relevance. Prioritize:
+- General AI news and developments
+- AI applications in manufacturing and industrial automation
+- AI in food industry and food manufacturing
+- AI in factory operations and production
+- Any significant AI breakthroughs or innovations
+
 If relevance is > 7, write a one-sentence summary in Japanese and English.
 
 Format your response as:

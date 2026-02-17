@@ -32,22 +32,8 @@ if not GEMINI_API_KEY:
 
 try:
     genai.configure(api_key=GEMINI_API_KEY)
-    # Try different model names in order of preference
-    model = None
-    model_names = ['gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-pro', 'gemini-1.5-flash']
-    
-    for model_name in model_names:
-        try:
-            model = genai.GenerativeModel(model_name)
-            print(f"✅ Using model: {model_name}")
-            break
-        except Exception as e:
-            if model_name == model_names[-1]:  # Last model, raise the error
-                raise
-            continue
-    
-    if model is None:
-        raise ValueError("Could not initialize any Gemini model. Please check your API key and model availability.")
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    print("✅ Using model: gemini-2.5-flash")
 except Exception as e:
     error_msg = str(e)
     if "API key" in error_msg or "API_KEY" in error_msg:

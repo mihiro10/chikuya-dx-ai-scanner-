@@ -28,10 +28,21 @@ RSS_FEEDS = [
 # Initialize Gemini AI
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY environment variable is not set")
+    raise ValueError("❌ GEMINI_API_KEY environment variable is not set. Please add it as a GitHub Secret.")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+try:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except Exception as e:
+    error_msg = str(e)
+    if "API key" in error_msg or "API_KEY" in error_msg:
+        raise ValueError(
+            "❌ Invalid Gemini API key. Please:\n"
+            "1. Get a new API key from: https://aistudio.google.com/app/apikey\n"
+            "2. Update the GEMINI_API_KEY secret in GitHub repository settings"
+        ) from e
+    else:
+        raise
 
 # Email configuration (optional - if not set, results will only be logged)
 EMAIL_USER = os.getenv("EMAIL_USER")
@@ -149,7 +160,11 @@ SUMMARY: [if relevance > 7, provide one sentence in Japanese and English, otherw
         
         return relevance, summary
     except Exception as e:
-        print(f"Error calling Gemini API: {e}")
+        error_msg = str(e)
+        if "API key" in error_msg or "API_KEY" in error_msg:
+            print(f"    ❌ API Key Error: Please check your GEMINI_API_KEY secret in GitHub settings")
+        else:
+            print(f"    ⚠️  Error calling Gemini API: {error_msg[:100]}")
         return 0, ""
 
 

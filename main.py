@@ -39,11 +39,11 @@ try:
     for model_name in model_names:
         try:
             model = genai.GenerativeModel(model_name)
-            # Test if model works
-            test_response = model.generate_content("test")
             print(f"✅ Using model: {model_name}")
             break
         except Exception as e:
+            if model_name == model_names[-1]:  # Last model, raise the error
+                raise
             continue
     
     if model is None:

@@ -70,18 +70,31 @@ def parse_date(date_string: str) -> datetime:
 
 def is_recent_article(entry: Dict, hours: int = 24) -> bool:
     """Check if article was published within the last N hours."""
+    article_date = None
+    
     if 'published_parsed' in entry and entry.published_parsed:
-        article_date = datetime(*entry.published_parsed[:6])
+        try:
+            # feedparser provides struct_time, convert to datetime
+            article_date = datetime(*entry.published_parsed[:6])
+        except (TypeError, ValueError):
+            pass
     elif 'published' in entry:
         article_date = parse_date(entry.published)
-    else:
-        return False
     
     if not article_date:
         return False
     
-    time_diff = datetime.now() - article_date.replace(tzinfo=None)
-    return time_diff <= timedelta(hours=hours)
+    # Remove timezone info for comparison (assume UTC if not specified)
+    if article_date.tzinfo is not None:
+        article_date = article_date.replace(tzinfo=None)
+    
+    now = datetime.utcnow()  # Use UTC for consistency
+    time_diff = now - article_date
+    
+    # Check if within the time window
+    is_recent = time_diff <= timedelta(hours=hours) and time_diff >= timedelta(hours=0)
+    
+    return is_recent
 
 
 def get_article_content(entry: Dict) -> tuple:
@@ -150,6 +163,21 @@ def scan_feeds() -> List[Dict]:
         feed_count = 0
         try:
             feed = feedparser.parse(feed_url)
+            total_entries = len(feed.entries) if feed.entries else 0
+            print(f"  Found {total_entries} total entries in feed")
+            
+            # Show most recent article date for debugging
+            if total_entries > 0:
+                most_recent = None
+                for entry in feed.entries[:3]:  # Check first 3 entries
+                    if 'published_parsed' in entry and entry.published_parsed:
+                        article_date = datetime(*entry.published_parsed[:6])
+                        if not most_recent or article_date > most_recent:
+                            most_recent = article_date
+                
+                if most_recent:
+                    hours_ago = (datetime.now() - most_recent.replace(tzinfo=None)).total_seconds() / 3600
+                    print(f"  Most recent article: {most_recent.strftime('%Y-%m-%d %H:%M:%S')} ({hours_ago:.1f} hours ago)")
             
             for entry in feed.entries:
                 if is_recent_article(entry, hours=24):
@@ -176,11 +204,13 @@ def scan_feeds() -> List[Dict]:
                         print(f"    - Not relevant (score: {relevance}/10)")
             
             if feed_count == 0:
-                print(f"  No articles found from the last 24 hours")
+                print(f"  ⚠️  No articles found from the last 24 hours")
             else:
-                print(f"  Processed {feed_count} article(s) from last 24 hours")
+                print(f"  ✓ Processed {feed_count} article(s) from last 24 hours")
         except Exception as e:
-            print(f"Error processing feed {feed_url}: {e}")
+            print(f"  ❌ Error processing feed {feed_url}: {e}")
+            import traceback
+            traceback.print_exc()
     
     # Summary
     print(f"\n📊 Summary: Processed {len(all_processed)} total articles, {len(relevant_articles)} relevant (score > 7)")

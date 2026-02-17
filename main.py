@@ -180,7 +180,7 @@ def scan_feeds() -> List[Dict]:
                     print(f"  Most recent article: {most_recent.strftime('%Y-%m-%d %H:%M:%S')} ({hours_ago:.1f} hours ago)")
             
             for entry in feed.entries:
-                if is_recent_article(entry, hours=24):
+                if is_recent_article(entry, hours=168):  # 7 days (168 hours)
                     feed_count += 1
                     title, snippet = get_article_content(entry)
                     link = entry.get('link', '')
@@ -204,9 +204,9 @@ def scan_feeds() -> List[Dict]:
                         print(f"    - Not relevant (score: {relevance}/10)")
             
             if feed_count == 0:
-                print(f"  ⚠️  No articles found from the last 24 hours")
+                print(f"  ⚠️  No articles found from the last 7 days")
             else:
-                print(f"  ✓ Processed {feed_count} article(s) from last 24 hours")
+                print(f"  ✓ Processed {feed_count} article(s) from last 7 days")
         except Exception as e:
             print(f"  ❌ Error processing feed {feed_url}: {e}")
             import traceback
@@ -229,14 +229,14 @@ def send_email_report(articles: List[Dict]):
         return
     
     # Create email content
-    subject = "🤖 Chikuya DX: Today's AI Updates"
+    subject = "🤖 Chikuya DX: Weekly AI Updates"
     
     html_body = f"""
     <html>
     <head></head>
     <body>
-        <h2>Chikuya DX AI Scanner - Daily Report</h2>
-        <p>Found {len(articles)} relevant AI news items from the last 24 hours:</p>
+        <h2>Chikuya DX AI Scanner - Weekly Report</h2>
+        <p>Found {len(articles)} relevant AI news items from the last 7 days:</p>
         <ul>
     """
     
